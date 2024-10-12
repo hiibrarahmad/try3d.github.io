@@ -20,20 +20,20 @@
     // Setup scene, camera, and renderer
     let scene = new THREE.Scene();
     let camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    let renderer = new THREE.WebGLRenderer();
+    let renderer = new THREE.WebGLRenderer({ antialias: true });
     renderer.setSize(window.innerWidth, window.innerHeight);
     document.body.appendChild(renderer.domElement);
 
-    // Add ambient light for better visibility
-    let ambientLight = new THREE.AmbientLight(0x404040, 2); // Soft light
+    // Add ambient light for base illumination
+    let ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // Increase light intensity
     scene.add(ambientLight);
 
-    // Add directional light to highlight model
-    let directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    // Add a more intense directional light
+    let directionalLight = new THREE.DirectionalLight(0xffffff, 2);
     directionalLight.position.set(1, 1, 1).normalize();
     scene.add(directionalLight);
 
-    // Orbit controls to rotate and zoom the camera
+    // Orbit controls to move around the scene
     let controls = new THREE.OrbitControls(camera, renderer.domElement);
 
     // Load MTL and OBJ files
@@ -46,32 +46,25 @@
         objLoader.setMaterials(materials);
         objLoader.setPath('./assets/');
         objLoader.load('model.obj', function (object) {
-            // Scale and position adjustments
-            object.scale.set(0.5, 0.5, 0.5);  // Adjust scale if too large/small
-            object.position.set(0, -1, 0);    // Adjust position if off-screen
-
+            object.scale.set(0.5, 0.5, 0.5);  // Adjust the size if needed
+            object.position.set(0, -1, 0);    // Center the object in the scene
             scene.add(object);
         });
     });
 
-    // Set camera position
-    camera.position.z = 5;
+    // Adjust camera distance
+    camera.position.set(0, 2, 10);  // Move the camera further from the object
 
     // Render the scene
     let animate = function () {
         requestAnimationFrame(animate);
-
-        // Optional: Rotate the model for a better view
-        scene.rotation.y += 0.01;
-
-        controls.update(); // Update orbit controls
-
+        controls.update();  // Enable camera movement with controls
         renderer.render(scene, camera);
     };
 
     animate();
 
-    // Handle window resize
+    // Handle window resizing
     window.addEventListener('resize', function () {
         let width = window.innerWidth;
         let height = window.innerHeight;
