@@ -76,31 +76,31 @@
 
     // Function to load OBJ and MTL files
     function loadModel(objFile, mtlFile) {
-        let mtlLoader = new THREE.MTLLoader();
-        let objLoader = new THREE.OBJLoader();
+        // Create object URLs for the uploaded files
+        let objURL = URL.createObjectURL(objFile);
+        let mtlURL = URL.createObjectURL(mtlFile);
 
-        // Read the MTL file first
-        let readerMtl = new FileReader();
-        readerMtl.onload = function(event) {
-            let mtlText = event.target.result;
-            let materials = mtlLoader.parse(mtlText);
+        // Load the material file first
+        let mtlLoader = new THREE.MTLLoader();
+        mtlLoader.load(mtlURL, function(materials) {
             materials.preload();
 
-            // Then read the OBJ file
-            let readerObj = new FileReader();
-            readerObj.onload = function(event) {
-                let objText = event.target.result;
-                objLoader.setMaterials(materials);
-                let object = objLoader.parse(objText);
-
-                object.scale.set(0.5, 0.5, 0.5);
-                object.position.set(0, -1, 0);
+            // Once materials are loaded, load the OBJ file
+            let objLoader = new THREE.OBJLoader();
+            objLoader.setMaterials(materials);
+            objLoader.load(objURL, function(object) {
+                object.scale.set(0.5, 0.5, 0.5);  // Adjust the size if needed
+                object.position.set(0, -1, 0);    // Center the object in the scene
 
                 scene.add(object);
-            };
-            readerObj.readAsText(objFile);
-        };
-        readerMtl.readAsText(mtlFile);
+            }, 
+            function (xhr) {
+                console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            },
+            function (error) {
+                console.error('An error occurred:', error);
+            });
+        });
     }
 
     // Adjust camera distance
