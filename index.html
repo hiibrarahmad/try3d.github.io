@@ -76,31 +76,35 @@
 
     // Function to load OBJ and MTL files
     function loadModel(objFile, mtlFile) {
-        // Create object URLs for the uploaded files
-        let objURL = URL.createObjectURL(objFile);
-        let mtlURL = URL.createObjectURL(mtlFile);
-
-        // Load the material file first
         let mtlLoader = new THREE.MTLLoader();
-        mtlLoader.load(mtlURL, function(materials) {
+        let objLoader = new THREE.OBJLoader();
+
+        // Read the MTL file first
+        let readerMtl = new FileReader();
+        readerMtl.onload = function(event) {
+            let mtlText = event.target.result;
+            let materials = mtlLoader.parse(mtlText);
             materials.preload();
 
-            // Once materials are loaded, load the OBJ file
-            let objLoader = new THREE.OBJLoader();
+            // Set the materials on the OBJLoader
             objLoader.setMaterials(materials);
-            objLoader.load(objURL, function(object) {
+
+            // Read the OBJ file after the MTL file is loaded
+            let readerObj = new FileReader();
+            readerObj.onload = function(event) {
+                let objText = event.target.result;
+                let object = objLoader.parse(objText);
+
                 object.scale.set(0.5, 0.5, 0.5);  // Adjust the size if needed
                 object.position.set(0, -1, 0);    // Center the object in the scene
 
                 scene.add(object);
-            }, 
-            function (xhr) {
-                console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-            },
-            function (error) {
-                console.error('An error occurred:', error);
-            });
-        });
+            };
+
+            readerObj.readAsText(objFile); // Read the OBJ file
+        };
+
+        readerMtl.readAsText(mtlFile); // Read the MTL file
     }
 
     // Adjust camera distance
