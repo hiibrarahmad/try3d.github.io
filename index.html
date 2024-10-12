@@ -36,6 +36,10 @@
     // Orbit controls to move around the scene
     let controls = new THREE.OrbitControls(camera, renderer.domElement);
 
+    // Add a grid helper to visualize the scene
+    let gridHelper = new THREE.GridHelper(10, 10);
+    scene.add(gridHelper);
+
     // Load MTL and OBJ files
     let mtlLoader = new THREE.MTLLoader();
     mtlLoader.setPath('./assets/');
@@ -48,7 +52,17 @@
         objLoader.load('model.obj', function (object) {
             object.scale.set(0.5, 0.5, 0.5);  // Adjust the size if needed
             object.position.set(0, -1, 0);    // Center the object in the scene
+
+            // Log to see if the object is loaded
+            console.log('3D object loaded:', object);
+
             scene.add(object);
+        }, 
+        function (xhr) {
+            console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+        },
+        function (error) {
+            console.error('An error occurred:', error);
         });
     });
 
