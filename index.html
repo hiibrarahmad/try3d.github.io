@@ -7,9 +7,21 @@
     <style>
         body { margin: 0; }
         canvas { display: block; }
+        #upload-container {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+        }
     </style>
 </head>
 <body>
+
+<div id="upload-container">
+    <input type="file" id="objFile" accept=".obj" />
+    <input type="file" id="mtlFile" accept=".mtl" />
+    <button id="loadModelBtn">Load Model</button>
+</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
@@ -25,7 +37,7 @@
     document.body.appendChild(renderer.domElement);
 
     // Add ambient light for base illumination
-    let ambientLight = new THREE.AmbientLight(0xffffff, 1.5); // Increase light intensity
+    let ambientLight = new THREE.AmbientLight(0xffffff, 1.5);
     scene.add(ambientLight);
 
     // Add a more intense directional light
@@ -40,34 +52,59 @@
     let gridHelper = new THREE.GridHelper(10, 10);
     scene.add(gridHelper);
 
-    // Load MTL and OBJ files
-    let mtlLoader = new THREE.MTLLoader();
-    mtlLoader.setPath('./assets/');
-    mtlLoader.load('model.mtl', function (materials) {
-        materials.preload();
+    // Files to load
+    let objFile = null;
+    let mtlFile = null;
 
-        let objLoader = new THREE.OBJLoader();
-        objLoader.setMaterials(materials);
-        objLoader.setPath('./assets/');
-        objLoader.load('model.obj', function (object) {
-            object.scale.set(0.5, 0.5, 0.5);  // Adjust the size if needed
-            object.position.set(0, -1, 0);    // Center the object in the scene
-
-            // Log to see if the object is loaded
-            console.log('3D object loaded:', object);
-
-            scene.add(object);
-        }, 
-        function (xhr) {
-            console.log((xhr.loaded / xhr.total * 100) + '% loaded');
-        },
-        function (error) {
-            console.error('An error occurred:', error);
-        });
+    // Event listeners for file uploads
+    document.getElementById('objFile').addEventListener('change', function(event) {
+        objFile = event.target.files[0];
     });
 
+    document.getElementById('mtlFile').addEventListener('change', function(event) {
+        mtlFile = event.target.files[0];
+    });
+
+    // Load model when button is clicked
+    document.getElementById('loadModelBtn').addEventListener('click', function() {
+        if (objFile && mtlFile) {
+            loadModel(objFile, mtlFile);
+        } else {
+            alert('Please upload both .obj and .mtl files');
+        }
+    });
+
+    // Function to load OBJ and MTL files
+    function loadModel(objFile, mtlFile) {
+        let mtlLoader = new THREE.MTLLoader();
+        let objLoader = new THREE.OBJLoader();
+
+        // Read the MTL file first
+        let readerMtl = new FileReader();
+        readerMtl.onload = function(event) {
+            let mtlText = event.target.result;
+            let materials = mtlLoader.parse(mtlText);
+            materials.preload();
+
+            // Then read the OBJ file
+            let readerObj = new FileReader();
+            readerObj.onload = function(event) {
+                let objText = event.target.result;
+                objLoader.setMaterials(materials);
+                let object = objLoader.parse(objText);
+
+                object.scale.set(0.5, 0.5, 0.5);
+                object.position.set(0, -1, 0);
+
+                scene.add(object);
+            };
+            readerObj.readAsText(objFile);
+        };
+        readerMtl.readAsText(mtlFile);
+    }
+
     // Adjust camera distance
-    camera.position.set(0, 2, 10);  // Move the camera further from the object
+    camera.position.set(0, 2, 10);
 
     // Render the scene
     let animate = function () {
